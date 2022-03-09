@@ -46,12 +46,36 @@ def welcome():
 
 @app.route("/api/v1.0/precipitation")
 def preceipation():
-    return (f"Prep")
+    session = Session(engine)
+    results = session.query(Measurement.date, Measurement.prcp).all()
+    session.close()
+
+    temp_list = []
+    for date, prcp in results:
+        temp_dict = {}
+        temp_dict['date'] = date
+        temp_dict['prcp'] = prcp
+        temp_list.append(temp_dict)
+
+    return (jsonify(temp_list))
 
 @app.route("/api/v1.0/stations")
 def stations():
-    return (f"stations")
+    session = Session(engine)
+    m_active = session.query(Measurement.station).\
+    group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).all()
+    session.close()
+
+    test = list(np.ravel(m_active))
+
+    return (jsonify(test))
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    return (f"tobs")
+    session = Session(engine)
+    m_station = session.query(Measurement.tobs).filter(Measurement.station == 'USC00519281', Measurement.date > "2016-08-24").all()
+    session.close()
+
+    test = list(np.ravel(m_station))
+
+    return (jsonify(test))
