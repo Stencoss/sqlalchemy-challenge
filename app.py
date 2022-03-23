@@ -40,8 +40,8 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs</br>"
-        f"/api/v1.0/<start></br>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/start_date (In year-month-day Format)</br>"
+        f"/api/v1.0/start_date/end_date(In year-month-day Format)"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -73,9 +73,33 @@ def stations():
 @app.route("/api/v1.0/tobs")
 def tobs():
     session = Session(engine)
-    m_station = session.query(Measurement.tobs).filter(Measurement.station == 'USC00519281', Measurement.date > "2016-08-24").all()
+    m_station = session.query(Measurement.tobs, Measurement.date).filter(Measurement.station == 'USC00519281', Measurement.date > "2016-08-24").all()
     session.close()
 
     test = list(np.ravel(m_station))
 
     return (jsonify(test))
+
+
+@app.route("/api/v1.0/<date>")
+def dates_after(date):
+    session = Session(engine)
+    m_station = session.query(func.min(Measurement.prcp), func.avg(Measurement.prcp), func.max(Measurement.prcp)).filter( Measurement.date > date).all()
+    session.close()
+
+    test = list(np.ravel(m_station))
+
+    return (jsonify(test))
+
+@app.route("/api/v1.0/<date>/<date2>")
+def dates_before_after(date, date2):
+    session = Session(engine)
+    m_station = session.query(func.min(Measurement.prcp), func.avg(Measurement.prcp), func.max(Measurement.prcp)).filter( date < Measurement.date, Measurement.date < date2).all()
+    session.close()
+
+    test = list(np.ravel(m_station))
+
+    return (jsonify(test))
+
+if __name__ == "__main__":
+    app.run(debug=True)
